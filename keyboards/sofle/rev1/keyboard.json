@@ -17,6 +17,10 @@
         ]
     },
     "split": {
+        "serial": {
+            "driver": "vendor",
+            "pin": "GP1"
+        },
         "encoder": {
             "right": {
                 "rotary": [

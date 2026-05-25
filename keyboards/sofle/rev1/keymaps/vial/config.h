@@ -20,9 +20,14 @@
 
 #pragma once
 
-// Vial Support
-#define VIAL_KEYBOARD_UID { 0x05, 0xCD, 0x9F, 0x8A, 0xF4, 0xDF, 0xDE, 0xB2 }
+#define MASTER_LEFT // allows you to flip layouts with vial by assigning EEH LEFT or EEH RIGHT to a key 
+// #define EE_HANDS // allows you to flip layouts with vial by assigning EEH LEFT or EEH RIGHT to a key 
+#define SPLIT_USB_DETECT // fixes non USB side not getting power
+#define SPLIT_TRANSPORT_MIRROR // syncs data between the halves so they don't have independent vial layouts
+#define SPLIT_WATCHDOG_ENABLE
+#define RGBLIGHT_SLEEP
 
-// The four corners
+// vial stuff
+#define VIAL_KEYBOARD_UID { 0x05, 0xCD, 0x9F, 0x8A, 0xF4, 0xDF, 0xDE, 0xB2 }
 #define VIAL_UNLOCK_COMBO_ROWS { 0, 5, 3, 8 }
 #define VIAL_UNLOCK_COMBO_COLS { 0, 0, 0, 0 }
