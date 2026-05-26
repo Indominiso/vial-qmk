@@ -62,14 +62,14 @@ static void apply_layer_rgb(uint8_t layer) {
     switch (layer) {
         case 1:
             rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-            rgb_matrix_sethsv_noeeprom(85, 255, 128);
+            rgb_matrix_sethsv_noeeprom(177, 214, 128);
             break;
         case 2:
             rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-            rgb_matrix_sethsv_noeeprom(21, 255, 128);
+            rgb_matrix_sethsv_noeeprom(217, 214, 128);
             break;
         default:
-            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_RIVERFLOW);
             rgb_matrix_sethsv_noeeprom(197, 214, 128);
             break;
     }
