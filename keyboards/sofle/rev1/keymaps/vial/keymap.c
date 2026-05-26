@@ -15,13 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 // clang-format off
-
 #include QMK_KEYBOARD_H
-#include "oled.c"
 
-// Default keymap. This can be changed in Vial. Use oled.c to change beavior that Vial cannot change.
+bool     rgb_hud_active = false;
+uint32_t rgb_hud_timer  = 0;
+#define  RGB_HUD_TIMEOUT_MS 10000
+
+typedef enum { RGB_TW_HUE, RGB_TW_SAT, RGB_TW_VAL, RGB_TW_SPD, RGB_TW_MOD, RGB_TW_COUNT } rgb_tweak_mode_t;
+rgb_tweak_mode_t rgb_tweak_mode = RGB_TW_HUE;
+
+enum custom_keycodes {
+    RGB_TW_NEXT = SAFE_RANGE,
+};
+
+#include "oled.c"
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [0] = LAYOUT(
@@ -44,67 +52,81 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______, MEH(KC_P),  KC_MPRV, KC_MNXT, KC_MPLY,                      _______, _______, _______, _______, _______, _______,
     _______,  KC_INS,   KC_PSCR,  KC_APP, XXXXXXX, KC_CAPS,                       KC_PGUP, _______,   KC_UP, _______, _______, KC_BSPC,
     _______, KC_LALT,   KC_LCTL, KC_LSFT, XXXXXXX, LCA(KC_F12),                     KC_PGDN, KC_LEFT, KC_DOWN, KC_RGHT,  KC_DEL, KC_BSPC,
-    _______, KC_UNDO,    KC_CUT, KC_COPY,KC_PASTE, XXXXXXX, LCTL(KC_S),     LCTL(KC_W), _______, XXXXXXX, _______, XXXXXXX, _______, _______,
+    _______, KC_UNDO,    KC_CUT, KC_COPY,KC_PASTE, XXXXXXX, LCTL(KC_S),     RGB_TW_NEXT, _______, XXXXXXX, _______, XXXXXXX, _______, _______,
                             _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______
   )
 };
 
-// const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
-//     [0] = { ENCODER_CCW_CW(KC_VOLD, KC_VOLU), ENCODER_CCW_CW(KC_PGUP, KC_PGDN) },
-//     [1] = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS), ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
-//     [2] = { ENCODER_CCW_CW(KC_TRNS, KC_TRNS), ENCODER_CCW_CW(KC_TRNS, KC_TRNS) },
-// };
-
-// Alt+Tab timeout state
-static bool is_alt_tab_active = false;
-static uint32_t alt_tab_timer = 0;
-#define ALT_TAB_TIMEOUT 1000
-
-void matrix_scan_user(void) {
-    if (is_alt_tab_active && timer_elapsed32(alt_tab_timer) > ALT_TAB_TIMEOUT) {
-        unregister_code(KC_LALT);
-        is_alt_tab_active = false;
+// Apply a distinct RGB effect per layer
+static void apply_layer_rgb(uint8_t layer) {
+    switch (layer) {
+        case 1:
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+            rgb_matrix_sethsv_noeeprom(85, 255, 128);
+            break;
+        case 2:
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+            rgb_matrix_sethsv_noeeprom(21, 255, 128);
+            break;
+        default:
+            rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_REACTIVE_SIMPLE);
+            rgb_matrix_sethsv_noeeprom(197, 214, 128);
+            break;
     }
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    apply_layer_rgb(get_highest_layer(state));
+
+    return state;
+}
+
+void keyboard_post_init_user(void) {
+    apply_layer_rgb(0);
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == RGB_TW_NEXT && record->event.pressed) {
+        rgb_tweak_mode = (rgb_tweak_mode + 1) % RGB_TW_COUNT;
+        rgb_hud_active = true;
+        rgb_hud_timer  = timer_read32();
+    }
+    return true;
 }
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     uint8_t layer = get_highest_layer(layer_state);
+    if (index == 0) {
+        rgb_hud_active = false;
 
-    if (index == 0) { 
         switch (layer) {
-            case 0: 
-                tap_code(clockwise ? KC_VOLU : KC_VOLD);
-                break;
-            case 1: 
-                tap_code16(clockwise ? LCTL(KC_EQL) : LCTL(KC_MINS));
-                break;
-            case 2: 
-                tap_code16(clockwise ? LCTL(KC_Y) : LCTL(KC_Z));
-                break;
+            case 0: tap_code(clockwise ? KC_VOLU : KC_VOLD); break;
+            case 1: tap_code16(clockwise ? LCTL(KC_EQL) : LCTL(KC_MINS)); break;
+            case 2: tap_code16(clockwise ? LCTL(KC_Y) : LCTL(KC_Z)); break;
         }
-    } else if (index == 1) { 
+    } else if (index == 1) {
         switch (layer) {
-            case 0: 
-                tap_code(clockwise ? KC_DOWN : KC_UP);
-                break;
-            case 1: 
-                tap_code(clockwise ? KC_RGHT : KC_LEFT);
-                break;
-            case 2: 
-                if (!is_alt_tab_active) {
-                    is_alt_tab_active = true;
-                    register_code(KC_LALT);
+            case 0: tap_code(clockwise ? KC_DOWN : KC_UP); break;
+            case 1: tap_code(clockwise ? KC_RGHT : KC_LEFT); break;
+            case 2:
+                rgb_hud_active = true;
+                rgb_hud_timer  = timer_read32();
+                switch (rgb_tweak_mode) {
+                    case RGB_TW_HUE: clockwise ? rgb_matrix_increase_hue_noeeprom() : rgb_matrix_decrease_hue_noeeprom(); break;
+                    case RGB_TW_SAT: clockwise ? rgb_matrix_increase_sat_noeeprom() : rgb_matrix_decrease_sat_noeeprom(); break;
+                    case RGB_TW_VAL: clockwise ? rgb_matrix_increase_val_noeeprom() : rgb_matrix_decrease_val_noeeprom(); break;
+                    case RGB_TW_SPD: clockwise ? rgb_matrix_increase_speed_noeeprom() : rgb_matrix_decrease_speed_noeeprom(); break;
+                    case RGB_TW_MOD: clockwise ? rgb_matrix_step_noeeprom() : rgb_matrix_step_reverse_noeeprom(); break;
+                    default: break;
                 }
-                alt_tab_timer = timer_read32();
-                tap_code16(clockwise ? KC_TAB : LSFT(KC_TAB));
                 break;
         }
     }
-    
     return false;
 }
 
-void keyboard_post_init_user(void) {
-    rgb_matrix_sethsv_noeeprom(197, 214, 128);
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
+void housekeeping_task_user(void) {
+    if (rgb_hud_active && timer_elapsed32(rgb_hud_timer) > RGB_HUD_TIMEOUT_MS) {
+        rgb_hud_active = false;
+    }
 }
