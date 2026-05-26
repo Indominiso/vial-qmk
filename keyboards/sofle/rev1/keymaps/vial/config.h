@@ -25,7 +25,12 @@
 #define SPLIT_USB_DETECT // fixes non USB side not getting power
 #define SPLIT_TRANSPORT_MIRROR // syncs data between the halves so they don't have independent vial layouts
 #define SPLIT_WATCHDOG_ENABLE
-#define RGBLIGHT_SLEEP
+#define SPLIT_WPM_ENABLE // makes wpm counter work on both halves, not just the master
+
+#define OLED_TIMEOUT 20000
+#define RGB_MATRIX_TIMEOUT 20000
+#define RGB_MATRIX_SLEEP // allows RGB to turn off when the computer goes to sleep
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 128  // for rgb_matrix
 
 // vial stuff
 #define VIAL_KEYBOARD_UID { 0x05, 0xCD, 0x9F, 0x8A, 0xF4, 0xDF, 0xDE, 0xB2 }
