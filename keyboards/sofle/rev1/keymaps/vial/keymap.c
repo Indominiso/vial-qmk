@@ -29,6 +29,7 @@ enum custom_keycodes {
     RGB_TW_NEXT = SAFE_RANGE,
 };
 
+
 #include "oled.c"
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -57,6 +58,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   )
 };
 
+#ifdef RGB_MATRIX_ENABLE
 // Apply a distinct RGB effect per layer
 static void apply_layer_rgb(uint8_t layer) {
     switch (layer) {
@@ -93,6 +95,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return true;
 }
+#endif
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     uint8_t layer = get_highest_layer(layer_state);
@@ -109,6 +112,7 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
             case 0: tap_code(clockwise ? KC_DOWN : KC_UP); break;
             case 1: tap_code(clockwise ? KC_RGHT : KC_LEFT); break;
             case 2:
+                #ifdef RGB_MATRIX_ENABLE
                 rgb_hud_active = true;
                 rgb_hud_timer  = timer_read32();
                 switch (rgb_tweak_mode) {
@@ -119,6 +123,8 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
                     case RGB_TW_MOD: clockwise ? rgb_matrix_step_noeeprom() : rgb_matrix_step_reverse_noeeprom(); break;
                     default: break;
                 }
+                #endif
+                
                 break;
         }
     }

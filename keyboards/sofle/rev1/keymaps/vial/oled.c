@@ -58,6 +58,7 @@ static void render_status(void) {
     oled_write_P(PSTR("     "), false);
 }
 
+#ifdef RGB_MATRIX_ENABLE
 // RGB HUD — shown while tweaking with the encoder on layer 2.
 static void render_rgb_hud(void) {
     char buf[6];
@@ -149,13 +150,16 @@ static void render_rgb_hud(void) {
     }
     oled_write_P(PSTR("]"), false);
 }
+#endif
 
 bool oled_task_user(void) {
     if (!is_keyboard_master()) {
         oled_render_anim();
     } else {
         if (rgb_hud_active) {
-            render_rgb_hud();
+            #ifdef RGB_MATRIX_ENABLE
+                render_rgb_hud();
+            #endif
         } else {
             render_status();
         }
